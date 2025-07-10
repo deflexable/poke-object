@@ -5,7 +5,23 @@ function isObject(o) {
         && Object.getPrototypeOf(o) === Object.prototype;
 }
 
+function getPath(path) {
+    if (typeof path === 'string') {
+        path = path.split('.');
+    } else if (
+        Number.isInteger(path) ||
+        typeof path === 'symbol'
+    ) {
+        path = [path];
+    } else if (!Array.isArray(path)) {
+        throw `poke second argument must be any of a string, symbol, integer or an array but got ${path}`;
+    }
+    return path;
+}
+
 function poke(obj, path, value) {
+    path = getPath(path);
+
     let curr = obj;
 
     for (let i = 0; i < path.length; i++) {
@@ -44,23 +60,28 @@ function poke(obj, path, value) {
     return obj;
 }
 
-function grab(obj, paths) {
+function grab(obj, paths, defaultValue) {
+    paths = getPath(paths);
+
     let curr = obj;
 
     for (let i = 0; i < paths.length; i++) {
         curr = curr?.[paths[i]];
     }
-    return curr;
+    return curr === undefined ? defaultValue : curr;
 }
 
 function unpoke(obj, paths) {
+    paths = getPath(paths);
+
     try {
         if (paths.length > 1) {
-            return delete getStrict(obj, paths.slice(0, -1))[paths.slice(-1)[0]];
+            return delete grab(obj, paths.slice(0, -1))[paths.slice(-1)[0]];
         } else if (paths.length === 1) {
             return delete obj[paths[0]];
         }
     } catch (_) { }
+    return false;
 }
 
 module.exports = {
